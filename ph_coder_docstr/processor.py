@@ -123,11 +123,8 @@ class DocumentationProcessor:
                 )
                 
                 if comment:
-                    # Detect indentation from the first line of code
-                    first_line = unit.content.split("\n")[0]
-                    indent = first_line[:len(first_line) - len(first_line.lstrip())]
-                    
-                    unit.comment = self.api_client.format_comment(comment, language, indent)
+                    # Use no indentation - comments are always at column 0 (顶格)
+                    unit.comment = self.api_client.format_comment(comment, language, "")
                     print("✓")
                 else:
                     print("✗ (failed)")
@@ -143,7 +140,8 @@ class DocumentationProcessor:
             )
             
             if file_comment:
-                file_comment = self.api_client.format_comment(file_comment, language)
+                # File-level comment also uses no indentation (顶格)
+                file_comment = self.api_client.format_comment(file_comment, language, "")
                 print("✓")
             else:
                 file_comment = ""
@@ -226,16 +224,16 @@ class DocumentationProcessor:
             unit_content = "\n".join(lines[unit.start_line:min(unit.end_line + 1, len(lines))])
             has_code = self._has_actual_code(unit_content)
             
-            # Add comment BEFORE code (only if unit has actual code and comment exists)
-            if unit.comment and has_code:
-                new_lines.extend(unit.comment.split("\n"))
-            
-            # Add the unit's content (only if it has actual code)
+            # Add the unit's content first (only if it has actual code)
             if has_code:
                 for i in range(unit.start_line, min(unit.end_line + 1, len(lines))):
                     if i not in processed_lines:
                         new_lines.append(lines[i])
                         processed_lines.add(i)
+                
+                # Add comment AFTER code (only if unit has actual code and comment exists)
+                if unit.comment:
+                    new_lines.extend(unit.comment.split("\n"))
             else:
                 # Mark lines as processed even if we skip them
                 for i in range(unit.start_line, min(unit.end_line + 1, len(lines))):
