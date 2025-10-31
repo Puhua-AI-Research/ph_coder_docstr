@@ -14,17 +14,17 @@ from .api_client import APIClient
 class DocumentationProcessor:
     """Main processor for adding documentation to code files."""
     
-    def __init__(self, project_path: str, config: Config):
+    def __init__(self, project_path: str, config: Optional[Config] = None):
         """
         Initialize the processor.
         
         Args:
             project_path: Path to the project directory
-            config: Configuration object
+            config: Configuration object (optional, only needed for processing files)
         """
         self.project_path = Path(project_path).resolve()
         self.config = config
-        self.api_client = APIClient(config)
+        self.api_client = APIClient(config) if config else None
         self.progress_file = self.project_path / ".ph_coder_docstr_progress.json"
         self.completed_files = self._load_progress()
     
@@ -66,6 +66,73 @@ class DocumentationProcessor:
                 code_files.append(file)
         
         return sorted(code_files)
+    
+    def find_backup_files(self) -> List[Path]:
+        """
+        Find all backup files in the project.
+        
+        Returns:
+            List of backup file paths
+        """
+        backup_files = []
+        
+        # Find all .backup files
+        for backup_file in self.project_path.rglob("*.backup"):
+            # Skip hidden directories and common ignore patterns
+            parts = backup_file.relative_to(self.project_path).parts
+            if any(part.startswith(".") or part in ["node_modules", "__pycache__", "venv", "env", "build", "dist"] for part in parts):
+                continue
+            backup_files.append(backup_file)
+        
+        return sorted(backup_files)
+    
+    def clean_backups(self, dry_run: bool = False) -> int:
+        """
+        Clean all backup files in the project.
+        
+        Args:
+            dry_run: If True, only show what would be deleted without actually deleting
+            
+        Returns:
+            Number of backup files deleted (or would be deleted in dry-run mode)
+        """
+        backup_files = self.find_backup_files()
+        
+        if not backup_files:
+            print("No backup files found.")
+            return 0
+        
+        print(f"\nFound {len(backup_files)} backup file(s):")
+        for backup_file in backup_files:
+            relative_path = backup_file.relative_to(self.project_path)
+            print(f"  - {relative_path}")
+        
+        if dry_run:
+            print(f"\nDry run mode: Would delete {len(backup_files)} backup file(s)")
+            return len(backup_files)
+        
+        # Ask for confirmation
+        print(f"\nAre you sure you want to delete {len(backup_files)} backup file(s)? [y/N]: ", end="")
+        confirmation = input().strip().lower()
+        
+        if confirmation not in ['y', 'yes']:
+            print("Aborted. No files were deleted.")
+            return 0
+        
+        # Delete backup files
+        deleted_count = 0
+        for backup_file in backup_files:
+            try:
+                backup_file.unlink()
+                relative_path = backup_file.relative_to(self.project_path)
+                print(f"  ✓ Deleted: {relative_path}")
+                deleted_count += 1
+            except Exception as e:
+                relative_path = backup_file.relative_to(self.project_path)
+                print(f"  ✗ Error deleting {relative_path}: {e}")
+        
+        print(f"\n✓ Successfully deleted {deleted_count} backup file(s)")
+        return deleted_count
     
     def process_file(self, file_path: Path) -> bool:
         """

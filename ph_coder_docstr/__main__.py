@@ -17,6 +17,8 @@ def main():
 Examples:
   %(prog)s --project ./my_project
   %(prog)s --project /path/to/project
+  %(prog)s --project ./my_project --clean-backups
+  %(prog)s --project ./my_project --clean-backups --dry-run
 
 Environment Variables:
   OPENAI_API_KEY      API key for OpenAI-compatible service (required)
@@ -32,10 +34,29 @@ Environment Variables:
         help="Path to the project directory to process"
     )
     
+    parser.add_argument(
+        "--clean-backups",
+        action="store_true",
+        help="Clean all backup files (*.backup) in the project"
+    )
+    
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Show what would be deleted without actually deleting (use with --clean-backups)"
+    )
+    
     args = parser.parse_args()
     
     try:
-        # Load configuration
+        # Handle clean-backups mode
+        if args.clean_backups:
+            # For cleaning backups, we don't need API configuration
+            processor = DocumentationProcessor(args.project)
+            processor.clean_backups(dry_run=args.dry_run)
+            sys.exit(0)
+        
+        # Normal processing mode - Load configuration
         print("Loading configuration...")
         config = Config()
         

@@ -49,6 +49,8 @@ OPENAI_MODELS_LIST=gpt-4o-mini,gpt-4o
 
 ### Command Line
 
+#### Generate Documentation
+
 ```bash
 python3 -m ph_coder_docstr --project ./path/to/your/project
 ```
@@ -57,6 +59,18 @@ Or if installed as a package:
 
 ```bash
 ph_coder_docstr --project ./path/to/your/project
+```
+
+#### Clean Backup Files
+
+After confirming the generated documentation is correct, you can clean up backup files:
+
+```bash
+# Dry run to see what would be deleted
+python3 -m ph_coder_docstr --project ./path/to/your/project --clean-backups --dry-run
+
+# Actually delete backup files (with confirmation prompt)
+python3 -m ph_coder_docstr --project ./path/to/your/project --clean-backups
 ```
 
 ### Example
@@ -69,6 +83,9 @@ export OPENAI_MODELS_LIST=gpt-4o-mini,gpt-4o
 
 # Process a project
 python3 -m ph_coder_docstr --project /workspace/code/tmp
+
+# After verifying the results, clean backup files
+python3 -m ph_coder_docstr --project /workspace/code/tmp --clean-backups
 ```
 
 ## How It Works
