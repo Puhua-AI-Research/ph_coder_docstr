@@ -10,7 +10,7 @@ from .config import MAX_LINES_PER_UNIT
 class CodeUnit:
     """Represents a unit of code (function, class, or chunk)."""
     
-    def __init__(self, content: str, start_line: int, end_line: int, unit_type: str = "chunk"):
+    def __init__(self, content: str, start_line: int, end_line: int, unit_type: str = "chunk", section: str = None):
         """
         Initialize a code unit.
         
@@ -19,11 +19,13 @@ class CodeUnit:
             start_line: Starting line number (0-indexed)
             end_line: Ending line number (0-indexed)
             unit_type: Type of unit (function, class, chunk)
+            section: Section type for Vue files (template, script, style)
         """
         self.content = content
         self.start_line = start_line
         self.end_line = end_line
         self.unit_type = unit_type
+        self.section = section  # For Vue files: template, script, or style
         self.comment = ""
     
     def get_line_count(self) -> int:
@@ -189,6 +191,10 @@ class CodeParser:
         Returns:
             List of CodeUnit objects
         """
+        # Special handling for Vue files
+        if self.language == "vue":
+            return self._split_vue_file(content)
+        
         lines = content.split("\n")
         units = []
         
@@ -249,6 +255,93 @@ class CodeParser:
         units.sort(key=lambda u: u.start_line)
         
         return units
+    
+    def _split_vue_file(self, content: str) -> List[CodeUnit]:
+        """
+        Split Vue single-file component into sections and units.
+        
+        Args:
+            content: Full Vue file content
+            
+        Returns:
+            List of CodeUnit objects with section information
+        """
+        lines = content.split("\n")
+        units = []
+        
+        # Find Vue sections
+        sections = self._find_vue_sections(lines)
+        
+        for section_type, start_line, end_line in sections:
+            section_content = "\n".join(lines[start_line:end_line + 1])
+            
+            # Create a temporary parser for the section's language
+            if section_type == "script":
+                section_parser = CodeParser("javascript")
+            elif section_type == "style":
+                # For style, we'll just create chunks
+                section_parser = None
+            else:  # template
+                # For template, we'll just create chunks
+                section_parser = None
+            
+            if section_parser:
+                # Parse the section as JavaScript
+                section_units = section_parser.split_into_units(section_content)
+                # Adjust line numbers and add section info
+                for unit in section_units:
+                    unit.start_line += start_line
+                    unit.end_line += start_line
+                    unit.section = section_type
+                    units.append(unit)
+            else:
+                # Create a single unit for template or style sections
+                unit = CodeUnit(section_content, start_line, end_line, "chunk", section=section_type)
+                units.append(unit)
+        
+        return units
+    
+    def _find_vue_sections(self, lines: List[str]) -> List[Tuple[str, int, int]]:
+        """
+        Find template, script, and style sections in Vue file.
+        
+        Args:
+            lines: List of file lines
+            
+        Returns:
+            List of (section_type, start_line, end_line) tuples
+            Note: Only includes content INSIDE the tags (excluding the tag lines themselves)
+        """
+        sections = []
+        current_section = None
+        section_start = 0
+        
+        for i, line in enumerate(lines):
+            stripped = line.strip()
+            
+            # Check for section start (opening tag)
+            if stripped.startswith("<template"):
+                current_section = "template"
+                section_start = i + 1  # Start from the line after the opening tag
+            elif stripped.startswith("<script"):
+                current_section = "script"
+                section_start = i + 1  # Start from the line after the opening tag
+            elif stripped.startswith("<style"):
+                current_section = "style"
+                section_start = i + 1  # Start from the line after the opening tag
+            # Check for section end (closing tag)
+            elif stripped == "</template>" or stripped == "</script>" or stripped == "</style>":
+                if current_section:
+                    # Only add section if there's content between the tags
+                    if i > section_start:
+                        sections.append((current_section, section_start, i - 1))
+                    current_section = None
+        
+        # Handle the last section if not closed
+        if current_section and section_start < len(lines):
+            sections.append((current_section, section_start, len(lines) - 1))
+        
+        return sections
     
     def _split_by_chunks(self, lines: List[str]) -> List[CodeUnit]:
         """Split code into chunks when no functions are found."""

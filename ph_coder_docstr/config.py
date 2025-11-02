@@ -44,7 +44,12 @@ class Config:
 SUPPORTED_EXTENSIONS = {
     ".py": "python",
     ".cpp": "cpp",
+    ".cc": "cpp",      # C++ alternative extension
+    ".cxx": "cpp",     # C++ alternative extension
     ".c": "c",
+    ".h": "c",         # C/C++ header file (default to C)
+    ".hpp": "cpp",     # C++ header file
+    ".hh": "cpp",      # C++ header file alternative
     ".cu": "cuda",
     ".cuh": "cuda",
     ".jsx": "javascript",

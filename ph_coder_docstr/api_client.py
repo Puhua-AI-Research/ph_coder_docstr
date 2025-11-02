@@ -50,6 +50,8 @@ class APIClient:
             "javascript": "使用 // 或 /* */ 格式的注释",
             "typescript": "使用 // 或 /* */ 格式的注释",
             "vue": "使用 // 或 /* */ 格式的注释（Vue单文件组件）",
+            "html": "使用 <!-- --> 格式的HTML注释",
+            "css": "使用 /* */ 格式的CSS注释",
             "c": "使用 /* */ 或 // 格式的注释",
             "cpp": "使用 /* */ 或 // 格式的注释",
             "cuda": "使用 /* */ 或 // 格式的注释",
@@ -204,22 +206,33 @@ class APIClient:
                 continue
             
             # Remove all common comment markers more thoroughly
-            # Remove leading markers: //, /*, #, *
-            while line and line[0] in ['/', '*', '#']:
+            # Remove leading markers: //, /*, #, *, <!--
+            while line:
                 if line.startswith('//') or line.startswith('/*'):
                     line = line[2:].strip()
+                elif line.startswith('<!--'):
+                    line = line[4:].strip()
                 elif line.startswith('#'):
                     line = line[1:].strip()
                 elif line.startswith('*'):
                     line = line[1:].strip()
+                elif line.startswith('<') and not line.startswith('</'):
+                    # Remove any remaining < at the start (partial HTML comment)
+                    line = line[1:].strip()
                 else:
                     break
             
-            # Remove trailing markers: */, */
+            # Remove trailing markers: */, -->, >
             while line and len(line) >= 2:
-                if line.endswith('*/'):
+                if line.endswith('-->'):
+                    line = line[:-3].strip()
+                elif line.endswith('*/'):
                     line = line[:-2].strip()
                 elif line.endswith('*'):
+                    line = line[:-1].strip()
+                elif line.endswith('>'):
+                    line = line[:-1].strip()
+                elif line.endswith('-'):
                     line = line[:-1].strip()
                 else:
                     break
@@ -243,6 +256,28 @@ class APIClient:
             # Python uses # for comments, not docstrings
             formatted_lines = [f'{indent}# {line}' for line in processed_lines]
             return "\n".join(formatted_lines)
+        
+        elif language == "html":
+            # HTML uses <!-- --> for comments
+            if len(processed_lines) == 1:
+                return f'{indent}<!-- {processed_lines[0]} -->'
+            else:
+                formatted = f'{indent}<!--\n'
+                for line in processed_lines:
+                    formatted += f'{indent}  {line}\n'
+                formatted += f'{indent}-->'
+                return formatted
+        
+        elif language == "css":
+            # CSS uses /* */ for comments
+            if len(processed_lines) == 1:
+                return f'{indent}/* {processed_lines[0]} */'
+            else:
+                formatted = f'{indent}/*\n'
+                for line in processed_lines:
+                    formatted += f'{indent} * {line}\n'
+                formatted += f'{indent} */'
+                return formatted
         
         elif language in ["javascript", "typescript", "vue"]:
             # JavaScript/TypeScript/Vue prefer // for multi-line comments

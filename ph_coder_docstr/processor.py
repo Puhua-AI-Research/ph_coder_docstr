@@ -260,16 +260,26 @@ class DocumentationProcessor:
                     commented_units.append(unit)
                     continue
                 
+                # Determine the effective language for Vue sections
+                effective_language = language
+                if language == "vue" and hasattr(unit, 'section') and unit.section:
+                    if unit.section == "template":
+                        effective_language = "html"
+                    elif unit.section == "script":
+                        effective_language = "javascript"
+                    elif unit.section == "style":
+                        effective_language = "css"
+                
                 # Generate comment
                 comment = self.api_client.generate_comment(
                     unit.content,
-                    language,
+                    effective_language,
                     unit.unit_type
                 )
                 
                 if comment:
                     # Use no indentation - comments are always at column 0 (顶格)
-                    unit.comment = self.api_client.format_comment(comment, language, "")
+                    unit.comment = self.api_client.format_comment(comment, effective_language, "")
                     print("✓")
                 else:
                     print("✗ (failed)")
@@ -285,8 +295,9 @@ class DocumentationProcessor:
             )
             
             if file_comment:
-                # File-level comment also uses no indentation (顶格)
-                file_comment = self.api_client.format_comment(file_comment, language, "")
+                # For Vue files, file-level comment should use HTML format
+                file_level_language = "html" if language == "vue" else language
+                file_comment = self.api_client.format_comment(file_comment, file_level_language, "")
                 print("✓")
             else:
                 file_comment = ""
