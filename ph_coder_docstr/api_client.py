@@ -49,6 +49,7 @@ class APIClient:
             "python": "使用 # 符号开头的单行或多行注释",
             "javascript": "使用 // 或 /* */ 格式的注释",
             "typescript": "使用 // 或 /* */ 格式的注释",
+            "vue": "使用 // 或 /* */ 格式的注释（Vue单文件组件）",
             "c": "使用 /* */ 或 // 格式的注释",
             "cpp": "使用 /* */ 或 // 格式的注释",
             "cuda": "使用 /* */ 或 // 格式的注释",
@@ -243,8 +244,8 @@ class APIClient:
             formatted_lines = [f'{indent}# {line}' for line in processed_lines]
             return "\n".join(formatted_lines)
         
-        elif language in ["javascript", "typescript"]:
-            # JavaScript/TypeScript prefer // for multi-line comments
+        elif language in ["javascript", "typescript", "vue"]:
+            # JavaScript/TypeScript/Vue prefer // for multi-line comments
             formatted_lines = [f'{indent}// {line}' for line in processed_lines]
             return "\n".join(formatted_lines)
         

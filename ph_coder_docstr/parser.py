@@ -76,6 +76,19 @@ class CodeParser:
             r"^(\s*)(type\s+\w+\s+struct\s*\{)",  # struct
             r"^(\s*)(type\s+\w+\s+interface\s*\{)",  # interface
         ],
+        "vue": [
+            # Vue uses JavaScript/TypeScript in <script> section
+            r"^(\s*)((?:async\s+)?function\s+\w+\s*\([^)]*\)\s*\{)",  # function (including async)
+            r"^(\s*)((?:const|let|var)\s+\w+\s*=\s*(?:async\s+)?function\s*\([^)]*\)\s*\{)",  # function expression
+            r"^(\s*)((?:const|let|var)\s+\w+\s*=\s*(?:async\s+)?\([^)]*\)\s*=>\s*\{)",  # arrow function
+            r"^(\s*)(export\s+default\s+\{)",  # export default (Vue component)
+            r"^(\s*)(data\s*\(\s*\)\s*\{)",  # data function
+            r"^(\s*)(computed\s*:\s*\{)",  # computed properties
+            r"^(\s*)(methods\s*:\s*\{)",  # methods
+            r"^(\s*)(mounted\s*\(\s*\)\s*\{)",  # lifecycle hooks
+            r"^(\s*)(created\s*\(\s*\)\s*\{)",  # lifecycle hooks
+            r"^(\s*)(\w+\s*\([^)]*\)\s*\{)",  # method definition
+        ],
     }
     
     def __init__(self, language: str):

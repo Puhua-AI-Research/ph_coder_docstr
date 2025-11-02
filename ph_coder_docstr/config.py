@@ -51,6 +51,7 @@ SUPPORTED_EXTENSIONS = {
     ".tsx": "typescript",
     ".ts": "typescript",
     ".js": "javascript",
+    ".vue": "vue",
     ".go": "go",
 }
 
