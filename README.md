@@ -4,13 +4,14 @@ A tool to automatically add documentation comments to code files using AI.
 
 ## Features
 
-- 🌍 **Multi-language support**: Python, C/C++, CUDA, JavaScript, TypeScript, Go
+- 🌍 **Multi-language support**: Python, C/C++, CUDA, JavaScript, TypeScript, Go (100% test coverage)
 - 🤖 **AI-powered**: Uses OpenAI-compatible APIs to generate meaningful comments
 - 🔄 **Smart retry**: Automatic retry with exponential backoff
 - 🔁 **Model rotation**: Round-robin through multiple models to avoid rate limits
 - 📊 **Progress tracking**: Resume processing after interruptions
 - 💾 **Safe**: Creates backups before modifying files
 - ⚡ **Intelligent splitting**: Splits large functions into manageable chunks
+- ✨ **Enhanced pattern matching**: Recognizes async functions, constructors, interfaces, and more
 
 ## Installation
 
@@ -100,13 +101,17 @@ python3 -m ph_coder_docstr --project /workspace/code/tmp --clean-backups
 
 ## Supported File Types
 
-- Python (`.py`)
-- C (`.c`)
-- C++ (`.cpp`)
-- CUDA (`.cu`, `.cuh`)
-- JavaScript (`.js`, `.jsx`)
-- TypeScript (`.ts`, `.tsx`)
-- Go (`.go`)
+### Complete Language Support (100% Pattern Coverage)
+
+- **Python** (`.py`): Functions, classes, methods, decorators, type annotations
+- **JavaScript** (`.js`, `.jsx`): Functions, async functions, arrow functions, classes, methods
+- **TypeScript** (`.ts`, `.tsx`): All JS features + interfaces, type annotations
+- **Go** (`.go`): Functions with single/multiple returns, methods with receivers, structs, interfaces
+- **C** (`.c`): Functions with all return types (including pointers), structs
+- **C++** (`.cpp`): Functions, methods, constructors, virtual functions, classes, namespaces
+- **CUDA** (`.cu`, `.cuh`): Kernel functions, device functions, host functions
+
+For detailed language support information, see [LANGUAGE_SUPPORT.md](LANGUAGE_SUPPORT.md).
 
 ## Features
 
@@ -122,10 +127,12 @@ The tool recognizes:
 ### Comment Style
 
 Comments are formatted according to language conventions:
-- **Python**: Docstrings (`"""..."""`)
-- **C/C++/CUDA**: C-style comments (`/* ... */` or `// ...`)
-- **JavaScript/TypeScript**: JSDoc-style comments
-- **Go**: Go-style comments
+- **Python**: `# Comments` (each line starts with #)
+- **C/C++/CUDA**: `/* Multi-line */` or `// Single line`
+- **JavaScript/TypeScript**: `// Comments` (each line starts with //)
+- **Go**: `// Comments` (each line starts with //)
+
+All comments are automatically line-wrapped to 30 characters per line for readability.
 
 ### Progress Tracking
 

@@ -42,35 +42,39 @@ class CodeParser:
             r"^(\s*)(@\w+(?:\([^)]*\))?)\s*$",  # decorators
         ],
         "javascript": [
-            r"^(\s*)(function\s+\w+\s*\([^)]*\)\s*\{)",
-            r"^(\s*)((?:const|let|var)\s+\w+\s*=\s*(?:async\s+)?function\s*\([^)]*\)\s*\{)",
-            r"^(\s*)((?:const|let|var)\s+\w+\s*=\s*(?:async\s+)?\([^)]*\)\s*=>\s*\{)",
-            r"^(\s*)(class\s+\w+(?:\s+extends\s+\w+)?\s*\{)",
+            r"^(\s*)((?:async\s+)?function\s+\w+\s*\([^)]*\)\s*\{)",  # function (including async)
+            r"^(\s*)((?:const|let|var)\s+\w+\s*=\s*(?:async\s+)?function\s*\([^)]*\)\s*\{)",  # function expression
+            r"^(\s*)((?:const|let|var)\s+\w+\s*=\s*(?:async\s+)?\([^)]*\)\s*=>\s*\{)",  # arrow function
+            r"^(\s*)(class\s+\w+(?:\s+extends\s+\w+)?\s*\{)",  # class
+            r"^(\s*)(\w+\s*\([^)]*\)\s*\{)",  # method definition (e.g., add(a, b) {)
         ],
         "typescript": [
-            r"^(\s*)(function\s+\w+\s*\([^)]*\)\s*:\s*\w+\s*\{)",
-            r"^(\s*)((?:const|let|var)\s+\w+\s*=\s*(?:async\s+)?function\s*\([^)]*\)(?:\s*:\s*\w+)?\s*\{)",
-            r"^(\s*)((?:const|let|var)\s+\w+\s*:\s*\([^)]*\)\s*=>\s*\w+\s*=\s*(?:async\s+)?\([^)]*\)\s*=>\s*\{)",
-            r"^(\s*)(class\s+\w+(?:\s+extends\s+\w+)?(?:\s+implements\s+\w+)?\s*\{)",
+            r"^(\s*)((?:async\s+)?function\s+\w+\s*\([^)]*\)(?:\s*:\s*[\w\[\]<>]+)?\s*\{)",  # function with optional return type
+            r"^(\s*)((?:const|let|var)\s+\w+\s*=\s*(?:async\s+)?function\s*\([^)]*\)(?:\s*:\s*[\w\[\]<>]+)?\s*\{)",  # function expression
+            r"^(\s*)((?:const|let|var)\s+\w+\s*:\s*\([^)]*\)\s*=>\s*[\w\[\]<>]+\s*=\s*(?:async\s+)?\([^)]*\)\s*=>\s*\{)",  # complex arrow
+            r"^(\s*)(class\s+\w+(?:\s+extends\s+\w+)?(?:\s+implements\s+[\w\s,]+)?\s*\{)",  # class
+            r"^(\s*)(interface\s+\w+(?:\s+extends\s+[\w\s,]+)?\s*\{)",  # interface
+            r"^(\s*)(\w+\s*\([^)]*\)(?:\s*:\s*[\w\[\]<>]+)?\s*\{)",  # method definition
         ],
         "c": [
-            r"^(\s*)(\w+\s+\w+\s*\([^)]*\)\s*\{)",
-            r"^(\s*)(struct\s+\w+\s*\{)",
+            r"^(\s*)((?:[\w\*]+\s+)+\w+\s*\([^)]*\)\s*\{)",  # function (including pointer types like void*)
+            r"^(\s*)(struct\s+\w+\s*\{)",  # struct
         ],
         "cpp": [
-            r"^(\s*)(\w+(?:::\w+)*\s+\w+\s*\([^)]*\)(?:\s+const)?\s*\{)",
-            r"^(\s*)(class\s+\w+(?:\s*:\s*(?:public|private|protected)\s+\w+)?\s*\{)",
-            r"^(\s*)(struct\s+\w+\s*\{)",
-            r"^(\s*)(namespace\s+\w+\s*\{)",
+            r"^(\s*)((?:virtual\s+)?(?:[\w\*]+(?:::\w+)*\s+)*\w+(?:::\w+)+\s*\([^)]*\)(?:\s+const)?\s*\{)",  # method/constructor with ::
+            r"^(\s*)((?:virtual\s+)?(?:[\w\*]+(?:::\w+)*\s+)+\w+\s*\([^)]*\)(?:\s+const)?\s*\{)",  # function with return type
+            r"^(\s*)(class\s+\w+(?:\s*:\s*(?:public|private|protected)\s+\w+)?\s*\{)",  # class
+            r"^(\s*)(struct\s+\w+\s*\{)",  # struct
+            r"^(\s*)(namespace\s+\w+\s*\{)",  # namespace
         ],
         "cuda": [
-            r"^(\s*)(__global__|__device__|__host__)\s+\w+\s+\w+\s*\([^)]*\)\s*\{",
-            r"^(\s*)(\w+\s+\w+\s*\([^)]*\)\s*\{)",
+            r"^(\s*)((?:__global__|__device__|__host__)\s+[\w\*]+\s+\w+\s*\([^)]*\)\s*\{)",  # CUDA kernel
+            r"^(\s*)((?:[\w\*]+\s+)+\w+\s*\([^)]*\)\s*\{)",  # regular function
         ],
         "go": [
-            r"^(\s*)(func\s+(?:\([^)]*\)\s*)?\w+\s*\([^)]*\)(?:\s*\([^)]*\))?\s*\{)",
-            r"^(\s*)(type\s+\w+\s+struct\s*\{)",
-            r"^(\s*)(type\s+\w+\s+interface\s*\{)",
+            r"^(\s*)(func\s+(?:\([^)]*\)\s*)?\w+\s*\([^)]*\)(?:\s+[\w\[\]\*\.]+)?(?:\s*\([^)]*\))?\s*\{)",  # function with optional single or multiple return values
+            r"^(\s*)(type\s+\w+\s+struct\s*\{)",  # struct
+            r"^(\s*)(type\s+\w+\s+interface\s*\{)",  # interface
         ],
     }
     
