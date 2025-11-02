@@ -134,6 +134,84 @@ class DocumentationProcessor:
         print(f"\n✓ Successfully deleted {deleted_count} backup file(s)")
         return deleted_count
     
+    def restore_from_backups(self, dry_run: bool = False) -> int:
+        """
+        Restore all files from their backup versions.
+        
+        Args:
+            dry_run: If True, only show what would be restored without actually restoring
+            
+        Returns:
+            Number of files restored (or would be restored in dry-run mode)
+        """
+        backup_files = self.find_backup_files()
+        
+        if not backup_files:
+            print("No backup files found.")
+            return 0
+        
+        print(f"\nFound {len(backup_files)} backup file(s):")
+        for backup_file in backup_files:
+            # Get the original file path by removing .backup extension
+            original_file = backup_file.with_suffix('')
+            relative_backup = backup_file.relative_to(self.project_path)
+            relative_original = original_file.relative_to(self.project_path)
+            print(f"  - {relative_backup} → {relative_original}")
+        
+        if dry_run:
+            print(f"\nDry run mode: Would restore {len(backup_files)} file(s)")
+            return len(backup_files)
+        
+        # Ask for confirmation
+        print(f"\n⚠️  WARNING: This will overwrite {len(backup_files)} file(s) with their backup versions!")
+        print(f"Are you sure you want to restore from backups? [y/N]: ", end="")
+        confirmation = input().strip().lower()
+        
+        if confirmation not in ['y', 'yes']:
+            print("Aborted. No files were restored.")
+            return 0
+        
+        # Restore files from backups
+        restored_count = 0
+        for backup_file in backup_files:
+            try:
+                original_file = backup_file.with_suffix('')
+                
+                # Read backup content
+                with open(backup_file, 'r', encoding='utf-8') as f:
+                    backup_content = f.read()
+                
+                # Write to original file
+                with open(original_file, 'w', encoding='utf-8') as f:
+                    f.write(backup_content)
+                
+                relative_path = original_file.relative_to(self.project_path)
+                print(f"  ✓ Restored: {relative_path}")
+                restored_count += 1
+                
+            except Exception as e:
+                relative_path = backup_file.relative_to(self.project_path)
+                print(f"  ✗ Error restoring {relative_path}: {e}")
+        
+        print(f"\n✓ Successfully restored {restored_count} file(s) from backups")
+        
+        # Ask if user wants to delete backup files after restoration
+        if restored_count > 0:
+            print(f"\nDo you want to delete the backup files now? [y/N]: ", end="")
+            delete_confirmation = input().strip().lower()
+            
+            if delete_confirmation in ['y', 'yes']:
+                deleted_count = 0
+                for backup_file in backup_files:
+                    try:
+                        backup_file.unlink()
+                        deleted_count += 1
+                    except Exception as e:
+                        print(f"  ✗ Error deleting backup: {e}")
+                print(f"  ✓ Deleted {deleted_count} backup file(s)")
+        
+        return restored_count
+    
     def process_file(self, file_path: Path) -> bool:
         """
         Process a single file to add documentation.
@@ -291,16 +369,16 @@ class DocumentationProcessor:
             unit_content = "\n".join(lines[unit.start_line:min(unit.end_line + 1, len(lines))])
             has_code = self._has_actual_code(unit_content)
             
-            # Add the unit's content first (only if it has actual code)
+            # Add comment BEFORE code (only if unit has actual code and comment exists)
             if has_code:
+                if unit.comment:
+                    new_lines.extend(unit.comment.split("\n"))
+                
+                # Add the unit's content after comment
                 for i in range(unit.start_line, min(unit.end_line + 1, len(lines))):
                     if i not in processed_lines:
                         new_lines.append(lines[i])
                         processed_lines.add(i)
-                
-                # Add comment AFTER code (only if unit has actual code and comment exists)
-                if unit.comment:
-                    new_lines.extend(unit.comment.split("\n"))
             else:
                 # Mark lines as processed even if we skip them
                 for i in range(unit.start_line, min(unit.end_line + 1, len(lines))):

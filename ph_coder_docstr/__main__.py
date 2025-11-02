@@ -19,6 +19,8 @@ Examples:
   %(prog)s --project /path/to/project
   %(prog)s --project ./my_project --clean-backups
   %(prog)s --project ./my_project --clean-backups --dry-run
+  %(prog)s --project ./my_project --restore-backups
+  %(prog)s --project ./my_project --restore-backups --dry-run
 
 Environment Variables:
   OPENAI_API_KEY      API key for OpenAI-compatible service (required)
@@ -41,14 +43,27 @@ Environment Variables:
     )
     
     parser.add_argument(
+        "--restore-backups",
+        action="store_true",
+        help="Restore all files from their backup versions"
+    )
+    
+    parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Show what would be deleted without actually deleting (use with --clean-backups)"
+        help="Show what would be done without actually doing it (use with --clean-backups or --restore-backups)"
     )
     
     args = parser.parse_args()
     
     try:
+        # Handle restore-backups mode
+        if args.restore_backups:
+            # For restoring backups, we don't need API configuration
+            processor = DocumentationProcessor(args.project)
+            processor.restore_from_backups(dry_run=args.dry_run)
+            sys.exit(0)
+        
         # Handle clean-backups mode
         if args.clean_backups:
             # For cleaning backups, we don't need API configuration

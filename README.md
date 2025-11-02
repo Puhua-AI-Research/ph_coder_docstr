@@ -62,6 +62,18 @@ Or if installed as a package:
 ph_coder_docstr --project ./path/to/your/project
 ```
 
+#### Restore from Backup Files
+
+If you're not satisfied with the generated documentation, you can restore all files from their backups:
+
+```bash
+# Dry run to see what would be restored
+python3 -m ph_coder_docstr --project ./path/to/your/project --restore-backups --dry-run
+
+# Actually restore files from backups (with confirmation prompt)
+python3 -m ph_coder_docstr --project ./path/to/your/project --restore-backups
+```
+
 #### Clean Backup Files
 
 After confirming the generated documentation is correct, you can clean up backup files:
@@ -85,8 +97,11 @@ export OPENAI_MODELS_LIST=gpt-4o-mini,gpt-4o
 # Process a project
 python3 -m ph_coder_docstr --project /workspace/code/tmp
 
-# After verifying the results, clean backup files
+# Option 1: If satisfied, clean backup files
 python3 -m ph_coder_docstr --project /workspace/code/tmp --clean-backups
+
+# Option 2: If not satisfied, restore from backups
+python3 -m ph_coder_docstr --project /workspace/code/tmp --restore-backups
 ```
 
 ## How It Works

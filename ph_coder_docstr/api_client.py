@@ -201,8 +201,35 @@ class APIClient:
             line = line.strip()
             if not line:
                 continue
-            # Remove existing comment markers if present
-            line = line.lstrip('#').lstrip('/').lstrip('*').strip()
+            
+            # Remove all common comment markers more thoroughly
+            # Remove leading markers: //, /*, #, *
+            while line and line[0] in ['/', '*', '#']:
+                if line.startswith('//') or line.startswith('/*'):
+                    line = line[2:].strip()
+                elif line.startswith('#'):
+                    line = line[1:].strip()
+                elif line.startswith('*'):
+                    line = line[1:].strip()
+                else:
+                    break
+            
+            # Remove trailing markers: */, */
+            while line and len(line) >= 2:
+                if line.endswith('*/'):
+                    line = line[:-2].strip()
+                elif line.endswith('*'):
+                    line = line[:-1].strip()
+                else:
+                    break
+            
+            # Final strip
+            line = line.strip()
+            
+            # Skip empty lines after cleaning
+            if not line:
+                continue
+                
             # Split long lines
             split_lines = self._split_long_line(line, max_length=30)
             processed_lines.extend(split_lines)
